@@ -165,6 +165,17 @@ function showResults() {
     const ps = document.getElementById('prize-section');
     if (prize.tier !== 'none') {
       const id = generateID();
+
+      if (REGISTRY_WEBHOOK_URL) {
+        const payload = buildRegistryPayload(id, score, total, prize);
+        fetch(REGISTRY_WEBHOOK_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      }
+
       let prizeTitle, emoji;
       if (prize.tier === 'complete') { prizeTitle = '🏆 BECA COMPLETA (100%) para cualquier formación académica de CEDEMA'; emoji = '🏆'; }
       else if (prize.tier === 'half') { prizeTitle = 'BECA DEL 50% para cualquier formación académica de CEDEMA'; emoji = '🎓'; }
