@@ -152,3 +152,8 @@ test('buildRegistryPayload passes through a null label unchanged', () => {
   assert.equal(payload.label, null);
   assert.equal(payload.tier, 'none');
 });
+
+test('buildRegistryPayload passes prizeTier.pct through verbatim instead of recomputing from score/total', () => {
+  const payload = buildRegistryPayload('CDM-AB12-CD34', 8, 10, { pct: 999, tier: 'half', label: 'BECA DEL 50%' });
+  assert.equal(payload.pct, 999);
+});

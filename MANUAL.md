@@ -64,6 +64,8 @@ function doPost(e) {
 
 4. Guardá el proyecto (ícono de disquete, o Ctrl+S).
 
+Nota: el sitio también envía `data.tier` (el nivel de beca en formato interno: `quarter`/`half`/`complete`), pero el script de arriba no lo escribe en ninguna columna a propósito — usa `data.label` (el texto legible) para la columna "Beca". `data.tier` queda disponible por si en el futuro querés filtrar o agrupar por nivel de forma más robusta que parseando el texto de `label`.
+
 ### 4.2 Publicarlo como Web App
 
 1. Arriba a la derecha, `Implementar → Nueva implementación`.
