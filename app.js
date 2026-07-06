@@ -193,6 +193,7 @@ function showResults() {
             </div>
             <span class="camera-icon">📱</span>
           </div>
+          <div class="validity">ℹ️ No aplica automáticamente a cursos o talleres organizados en colaboración con instituciones aliadas. Consultá términos y condiciones.</div>
         </div>`;
     } else {
       ps.innerHTML = `
