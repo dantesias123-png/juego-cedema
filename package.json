@@ -1,0 +1,9 @@
+{
+  "name": "trivia-cedema",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Trivia estatica de Relaciones Internacionales - CEDEMA",
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}
