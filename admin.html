@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>CEDEMA Trivia — Panel de administración</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; color: #2c3e50; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  p.hint { color: #7f8c8d; font-size: 13px; margin-bottom: 20px; }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  button { cursor: pointer; border-radius: 8px; border: 1px solid #2470c0; background: #fff; color: #2470c0; padding: 8px 14px; font-size: 13px; font-family: inherit; }
+  button.primary { background: #2470c0; color: #fff; }
+  #summary { background: #e8f0fb; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
+  #error-box { display: none; background: #fdf0f0; color: #c0392b; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; }
+  .axis-block { border: 1px solid #dde3ea; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+  .axis-header { display: flex; align-items: center; gap: 10px; background: #f4f7f6; padding: 10px 14px; cursor: pointer; }
+  .axis-header strong { flex: 1; }
+  .axis-questions { padding: 10px 14px; display: none; }
+  .axis-block.open .axis-questions { display: block; }
+  .axis-controls { display: flex; gap: 8px; margin-bottom: 8px; }
+  .axis-controls button { padding: 4px 10px; font-size: 12px; }
+  .question-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #eef1f3; }
+  .question-row:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+  <h1>Panel de administración — Trivia CEDEMA</h1>
+  <p class="hint">Uso local únicamente. No subas este archivo al hosting público.</p>
+
+  <div class="toolbar">
+    <button id="btn-load">Cargar configuración existente</button>
+    <input type="file" id="file-input" accept=".js" style="display:none;">
+    <button id="btn-download" class="primary">Generar y descargar config.js</button>
+  </div>
+
+  <div id="error-box"></div>
+  <div id="summary"></div>
+
+  <div id="axes-container"></div>
+
+  <script src="questions.js"></script>
+  <script src="admin-logic.js"></script>
+  <script>
+    let state = buildDefaultState(questionBank);
+
+    function renderSummary() {
+      const { axesUsed } = computeSummary(questionBank, state);
+      document.getElementById('summary').textContent =
+        `Juego resultante: ${axesUsed} pregunta${axesUsed !== 1 ? 's' : ''} (1 por eje activo).`;
+    }
+
+    function showError(message) {
+      const box = document.getElementById('error-box');
+      box.textContent = message;
+      box.style.display = message ? 'block' : 'none';
+    }
+
+    function renderAxes() {
+      const container = document.getElementById('axes-container');
+      container.innerHTML = '';
+
+      Object.keys(questionBank).forEach(axisName => {
+        const axisState = state.axes[axisName];
+        const block = document.createElement('div');
+        block.className = 'axis-block';
+
+        const header = document.createElement('div');
+        header.className = 'axis-header';
+
+        const axisCheckbox = document.createElement('input');
+        axisCheckbox.type = 'checkbox';
+        axisCheckbox.checked = axisState.enabled;
+        axisCheckbox.addEventListener('change', () => {
+          axisState.enabled = axisCheckbox.checked;
+          renderSummary();
+        });
+
+        const title = document.createElement('strong');
+        title.textContent = axisName;
+
+        header.appendChild(axisCheckbox);
+        header.appendChild(title);
+        header.addEventListener('click', (evt) => {
+          if (evt.target === axisCheckbox) return;
+          block.classList.toggle('open');
+        });
+
+        const questionsWrap = document.createElement('div');
+        questionsWrap.className = 'axis-questions';
+
+        const controls = document.createElement('div');
+        controls.className = 'axis-controls';
+        const btnAll = document.createElement('button');
+        btnAll.textContent = 'Marcar todas';
+        btnAll.addEventListener('click', () => {
+          axisState.questions = axisState.questions.map(() => true);
+          renderAxes();
+          renderSummary();
+        });
+        const btnNone = document.createElement('button');
+        btnNone.textContent = 'Desmarcar todas';
+        btnNone.addEventListener('click', () => {
+          axisState.questions = axisState.questions.map(() => false);
+          renderAxes();
+          renderSummary();
+        });
+        controls.appendChild(btnAll);
+        controls.appendChild(btnNone);
+        questionsWrap.appendChild(controls);
+
+        questionBank[axisName].forEach((question, index) => {
+          const row = document.createElement('div');
+          row.className = 'question-row';
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = axisState.questions[index];
+          checkbox.addEventListener('change', () => {
+            axisState.questions[index] = checkbox.checked;
+            renderSummary();
+          });
+          const label = document.createElement('span');
+          label.textContent = question.q.length > 100 ? question.q.slice(0, 100) + '…' : question.q;
+          row.appendChild(checkbox);
+          row.appendChild(label);
+          questionsWrap.appendChild(row);
+        });
+
+        block.appendChild(header);
+        block.appendChild(questionsWrap);
+        container.appendChild(block);
+      });
+    }
+
+    document.getElementById('btn-download').addEventListener('click', () => {
+      const gameConfig = serializeStateToConfig(state);
+      const fileText = configObjectToFileText(gameConfig);
+      const blob = new Blob([fileText], { type: 'text/javascript' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'config.js';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('btn-load').addEventListener('click', () => {
+      document.getElementById('file-input').click();
+    });
+
+    document.getElementById('file-input').addEventListener('change', (evt) => {
+      const file = evt.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const gameConfig = parseConfigFileText(reader.result);
+          state = applyConfigToState(questionBank, gameConfig);
+          showError('');
+          renderAxes();
+          renderSummary();
+        } catch (err) {
+          showError(err.message);
+        }
+      };
+      reader.readAsText(file);
+      evt.target.value = '';
+    });
+
+    renderAxes();
+    renderSummary();
+  </script>
+</body>
+</html>
