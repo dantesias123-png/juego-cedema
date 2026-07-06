@@ -65,6 +65,41 @@ function buildGame(questionBank, gameConfig) {
   return shuffle(selected);
 }
 
+// ══════════════════════════════════════════════
+//  PREMIOS Y MENSAJES DE RESULTADO
+// ══════════════════════════════════════════════
+function computePercentage(score, total) {
+  if (total <= 0) return 0;
+  return Math.round((score / total) * 100);
+}
+
+function computePrizeTier(score, total) {
+  const pct = computePercentage(score, total);
+  if (pct >= 100) return { pct, tier: 'complete', label: 'BECA COMPLETA (100%)' };
+  if (pct >= 80) return { pct, tier: 'half', label: 'BECA DEL 50%' };
+  if (pct >= 60) return { pct, tier: 'quarter', label: 'BECA DEL 25%' };
+  return { pct, tier: 'none', label: null };
+}
+
+function getResultMessage(score, total) {
+  const pct = computePercentage(score, total);
+  if (pct >= 100) return { title: '¡Resultado perfecto! 🏆', subtitle: '¡Conocés las Relaciones Internacionales a un nivel de experto!' };
+  if (pct >= 80) return { title: '¡Excelente resultado!', subtitle: 'Tu nivel de análisis geopolítico es notable. ¡Felicitaciones!' };
+  if (pct >= 60) return { title: '¡Muy buen desempeño!', subtitle: 'Dominás los temas clave de la política internacional contemporánea.' };
+  if (pct >= 40) return { title: 'Conocimiento en construcción', subtitle: '¡Estás desarrollando una mirada geopolítica interesante!' };
+  if (pct >= 20) return { title: 'Vas por buen camino', subtitle: '¡Cada pregunta es una oportunidad de aprendizaje!' };
+  return { title: 'Buen primer paso', subtitle: 'Las Relaciones Internacionales tienen mucho para ofrecerte. ¡Seguí explorando!' };
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { LETTERS, shuffle, shuffleOptions, generateID, resolveGameAxes, buildGame };
+  module.exports = {
+    LETTERS,
+    shuffle,
+    shuffleOptions,
+    generateID,
+    resolveGameAxes,
+    buildGame,
+    computePrizeTier,
+    getResultMessage
+  };
 }

@@ -91,3 +91,36 @@ test('buildGame skips an axis whose questions are all disabled, reducing game le
   assert.equal(game.length, 2);
   assert.ok(!game.some(item => item.axis === 'Eje B'));
 });
+
+const { computePrizeTier, getResultMessage } = require('../game-logic.js');
+
+test('computePrizeTier returns none below 60%', () => {
+  assert.equal(computePrizeTier(5, 10).tier, 'none');
+});
+
+test('computePrizeTier returns quarter between 60% and 79%', () => {
+  assert.equal(computePrizeTier(6, 10).tier, 'quarter');
+  assert.equal(computePrizeTier(7, 10).tier, 'quarter');
+});
+
+test('computePrizeTier returns half between 80% and 99%', () => {
+  assert.equal(computePrizeTier(8, 10).tier, 'half');
+  assert.equal(computePrizeTier(9, 10).tier, 'half');
+});
+
+test('computePrizeTier returns complete at 100%', () => {
+  assert.equal(computePrizeTier(10, 10).tier, 'complete');
+});
+
+test('computePrizeTier scales correctly for a shorter game', () => {
+  assert.equal(computePrizeTier(4, 6).tier, 'quarter'); // 4/6 = 67%
+});
+
+test('getResultMessage matches the original score-bucket copy', () => {
+  assert.equal(getResultMessage(0, 10).title, 'Buen primer paso');
+  assert.equal(getResultMessage(3, 10).title, 'Vas por buen camino');
+  assert.equal(getResultMessage(5, 10).title, 'Conocimiento en construcción');
+  assert.equal(getResultMessage(7, 10).title, '¡Muy buen desempeño!');
+  assert.equal(getResultMessage(9, 10).title, '¡Excelente resultado!');
+  assert.equal(getResultMessage(10, 10).title, '¡Resultado perfecto! 🏆');
+});
