@@ -91,6 +91,21 @@ function getResultMessage(score, total) {
   return { title: 'Buen primer paso', subtitle: 'Las Relaciones Internacionales tienen mucho para ofrecerte. ¡Seguí explorando!' };
 }
 
+// ══════════════════════════════════════════════
+//  REGISTRO DE BECAS (payload para Google Sheets)
+// ══════════════════════════════════════════════
+function buildRegistryPayload(code, score, total, prizeTier) {
+  return {
+    code,
+    score,
+    total,
+    pct: prizeTier.pct,
+    tier: prizeTier.tier,
+    label: prizeTier.label,
+    timestamp: new Date().toISOString()
+  };
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     LETTERS,
@@ -100,6 +115,7 @@ if (typeof module !== 'undefined' && module.exports) {
     resolveGameAxes,
     buildGame,
     computePrizeTier,
-    getResultMessage
+    getResultMessage,
+    buildRegistryPayload
   };
 }

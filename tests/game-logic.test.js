@@ -124,3 +124,31 @@ test('getResultMessage matches the original score-bucket copy', () => {
   assert.equal(getResultMessage(9, 10).title, '¡Excelente resultado!');
   assert.equal(getResultMessage(10, 10).title, '¡Resultado perfecto! 🏆');
 });
+
+const { buildRegistryPayload } = require('../game-logic.js');
+
+test('buildRegistryPayload shapes the exact fields the Sheet expects', () => {
+  const prizeTier = { pct: 80, tier: 'half', label: 'BECA DEL 50%' };
+  const payload = buildRegistryPayload('CDM-AB12-CD34', 8, 10, prizeTier);
+  assert.deepEqual(Object.keys(payload).sort(), ['code', 'label', 'pct', 'score', 'tier', 'timestamp', 'total'].sort());
+  assert.equal(payload.code, 'CDM-AB12-CD34');
+  assert.equal(payload.score, 8);
+  assert.equal(payload.total, 10);
+  assert.equal(payload.pct, 80);
+  assert.equal(payload.tier, 'half');
+  assert.equal(payload.label, 'BECA DEL 50%');
+});
+
+test('buildRegistryPayload timestamp is a valid ISO 8601 string close to now', () => {
+  const before = Date.now();
+  const payload = buildRegistryPayload('CDM-AB12-CD34', 10, 10, { pct: 100, tier: 'complete', label: 'BECA COMPLETA (100%)' });
+  const parsed = Date.parse(payload.timestamp);
+  assert.ok(!Number.isNaN(parsed), 'timestamp should be parseable');
+  assert.ok(parsed >= before && parsed <= Date.now(), 'timestamp should be current');
+});
+
+test('buildRegistryPayload passes through a null label unchanged', () => {
+  const payload = buildRegistryPayload('CDM-AB12-CD34', 5, 10, { pct: 50, tier: 'none', label: null });
+  assert.equal(payload.label, null);
+  assert.equal(payload.tier, 'none');
+});
