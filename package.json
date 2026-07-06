@@ -4,6 +4,6 @@
   "private": true,
   "description": "Trivia estatica de Relaciones Internacionales - CEDEMA",
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node --test"
   }
 }
