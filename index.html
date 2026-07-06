@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivia CEDEMA — Relaciones Internacionales</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+
+  :root {
+    --blue:       #2470c0;
+    --blue-dark:  #1a5499;
+    --blue-light: #e8f0fb;
+    --charcoal:   #2c3e50;
+    --slate:      #7f8c8d;
+    --bg:         #f4f7f6;
+    --white:      #ffffff;
+    --green:      #2ecc71;
+    --green-dark: #27ae60;
+    --amber:      #f39c12;
+    --radius:     14px;
+    --shadow:     0 4px 24px rgba(36,112,192,.12);
+    --shadow-lg:  0 8px 40px rgba(36,112,192,.18);
+    --transition: .22s cubic-bezier(.4,0,.2,1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--charcoal);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* ══════════════════════════════════════
+     SCREEN SYSTEM — page transitions
+  ══════════════════════════════════════ */
+  .screen {
+    display: none;
+    width: 100%;
+    max-width: 720px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .screen.active { display: block; }
+
+  /* Transition states */
+  .screen.enter-from-right { animation: slideInRight .45s cubic-bezier(.22,1,.36,1) both; }
+  .screen.enter-from-left  { animation: slideInLeft  .45s cubic-bezier(.22,1,.36,1) both; }
+  .screen.exit-to-left     { animation: slideOutLeft  .35s cubic-bezier(.4,0,1,1) both; }
+  .screen.exit-to-right    { animation: slideOutRight .35s cubic-bezier(.4,0,1,1) both; }
+  .screen.fade-in          { animation: fadeScale     .5s  cubic-bezier(.22,1,.36,1) both; }
+
+  @keyframes slideInRight  { from { opacity:0; transform:translateX(calc(-50% + 60px)); } to { opacity:1; transform:translateX(-50%); } }
+  @keyframes slideInLeft   { from { opacity:0; transform:translateX(calc(-50% - 60px)); } to { opacity:1; transform:translateX(-50%); } }
+  @keyframes slideOutLeft  { from { opacity:1; transform:translateX(-50%); } to { opacity:0; transform:translateX(calc(-50% - 60px)); } }
+  @keyframes slideOutRight { from { opacity:1; transform:translateX(-50%); } to { opacity:0; transform:translateX(calc(-50% + 60px)); } }
+  @keyframes fadeScale     { from { opacity:0; transform:translateX(-50%) scale(.97); } to { opacity:1; transform:translateX(-50%) scale(1); } }
+
+  /* ══════════════════════════════════════
+     SPLASH SCREEN
+  ══════════════════════════════════════ */
+  #screen-splash {
+    background: #2e6cb5;
+    min-height: 100vh;
+    max-width: 100vw;
+    left: 0;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    z-index: 100;
+  }
+  #screen-splash.active { display: flex; }
+  #screen-splash.exit-splash {
+    animation: splashExit .7s cubic-bezier(.4,0,.2,1) both;
+  }
+  @keyframes splashExit {
+    from { opacity:1; transform: scale(1); }
+    to   { opacity:0; transform: scale(1.04); }
+  }
+
+  /* SVG logo animation */
+  .splash-logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    opacity: 0;
+    animation: splashLogoIn .6s cubic-bezier(.22,1,.36,1) .2s both;
+  }
+  @keyframes splashLogoIn {
+    from { opacity:0; transform: translateY(20px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+    .splash-real-logo {
+    width: min(480px, 85vw);
+    height: auto;
+    border-radius: 16px;
+    opacity: 0;
+    animation: splashLogoImgIn .7s cubic-bezier(.22,1,.36,1) .3s both;
+  }
+  @keyframes splashLogoImgIn {
+    from { opacity: 0; transform: scale(.93); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .btn-splash {
+    background: transparent;
+    border: 2.5px solid rgba(255,255,255,.85);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    padding: 16px 56px;
+    border-radius: 50px;
+    cursor: pointer;
+    opacity: 0;
+    transition: background .25s, border-color .25s, transform .2s;
+    animation: btnAppear .5s cubic-bezier(.22,1,.36,1) 1.2s both;
+  }
+  @keyframes btnAppear {
+    from { opacity:0; transform: translateY(12px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .btn-splash:hover {
+    background: rgba(255,255,255,.15);
+    border-color: #fff;
+    transform: translateY(-2px);
+  }
+  .btn-splash:active { transform: translateY(0); }
+
+  /* ══════════════════════════════════════
+     CARD SHELL
+  ══════════════════════════════════════ */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+
+  /* ── HEADER STRIP ── */
+  .card-header {
+    background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 100%);
+    padding: 28px 36px 24px;
+    color: #fff;
+    position: relative;
+  }
+  .card-header::after {
+    content:'';
+    position:absolute;
+    bottom:-1px; left:0; right:0;
+    height:6px;
+    background: linear-gradient(90deg, var(--green) 0%, #1abc9c 100%);
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  /* Inline SVG logo in header — small */
+  .logo-mark-img {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .logo-mark-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .logo-text { line-height: 1.2; }
+  .logo-text strong { font-size: 17px; font-weight: 700; letter-spacing: .02em; }
+  .logo-text span { font-size: 11px; opacity: .7; letter-spacing: .05em; text-transform: uppercase; display: block; }
+
+  /* ── START SCREEN ── */
+  .card-header--start {
+    padding-top: 32px;
+    padding-bottom: 28px;
+    text-align: left;
+  }
+  .start-logo-img {
+    display: block;
+    width: 140px;
+    height: auto;
+    margin-bottom: 20px;
+    border-radius: 8px;
+  }
+  #screen-start .card-header h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(22px, 4vw, 30px);
+    line-height: 1.25;
+  }
+  #screen-start .card-header p {
+    font-size: 13px;
+    opacity: .8;
+    margin-top: 6px;
+    font-weight: 300;
+  }
+  .card-body { padding: 32px 36px; }
+
+  .intro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .intro-item {
+    background: var(--blue-light);
+    border-radius: 10px;
+    padding: 16px 18px;
+    border-left: 3px solid var(--blue);
+  }
+  .intro-item .label { font-size: 11px; color: var(--blue); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .intro-item .value { font-size: 15px; font-weight: 600; color: var(--charcoal); }
+
+  .rules-list { list-style: none; margin-bottom: 28px; }
+  .rules-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 14px; color: var(--slate);
+    padding: 8px 0;
+    border-bottom: 1px solid #eef1f3;
+  }
+  .rules-list li:last-child { border-bottom: none; }
+  .rules-list li::before {
+    content: '›';
+    color: var(--blue);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.1;
+    flex-shrink: 0;
+  }
+
+  .prize-ladder {
+    background: linear-gradient(135deg, #f0fdf5 0%, #e8f8ef 100%);
+    border: 1.5px solid #a8e6c3;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+  }
+  .prize-ladder h3 { font-size: 12px; color: var(--green-dark); font-weight: 700; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; }
+  .prize-row {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; padding: 5px 0;
+  }
+  .prize-badge {
+    min-width: 52px;
+    background: var(--green);
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    border-radius: 6px;
+    padding: 3px 8px;
+    text-align: center;
+  }
+  .prize-badge.gold { background: var(--amber); }
+  .prize-badge.none { background: var(--slate); }
+
+  .btn-primary {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    padding: 17px 24px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 16px rgba(36,112,192,.35);
+    font-family: inherit;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(36,112,192,.45); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* ── GAME SCREEN ── */
+  .progress-bar-wrap {
+    height: 5px;
+    background: rgba(255,255,255,.2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 14px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 3px;
+    transition: width .5s ease;
+    width: 0%;
+  }
+  .q-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; opacity: .75; margin-top: 8px;
+  }
+
+  .axis-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.3);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    border-radius: 20px;
+    padding: 5px 14px;
+    margin-top: 16px;
+  }
+
+  .question-text {
+    font-size: clamp(15px, 2.5vw, 18px);
+    font-weight: 500;
+    line-height: 1.55;
+    color: var(--charcoal);
+    margin-bottom: 24px;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .opt-btn {
+    background: var(--white);
+    border: 2px solid #dde3ea;
+    border-radius: 10px;
+    padding: 16px 18px;
+    text-align: left;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--charcoal);
+    cursor: pointer;
+    transition: var(--transition);
+    line-height: 1.4;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    opacity: 0;
+    animation: optIn .3s ease both;
+  }
+  .opt-btn:nth-child(1) { animation-delay: .05s; }
+  .opt-btn:nth-child(2) { animation-delay: .1s; }
+  .opt-btn:nth-child(3) { animation-delay: .15s; }
+  .opt-btn:nth-child(4) { animation-delay: .2s; }
+  @keyframes optIn {
+    from { opacity:0; transform: translateY(8px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  .opt-btn:hover:not(:disabled) {
+    border-color: var(--blue);
+    background: var(--blue-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 10px rgba(36,112,192,.12);
+  }
+  .opt-letter {
+    width: 24px; height: 24px;
+    background: #eef2f7;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--blue);
+    flex-shrink: 0;
+  }
+  .opt-btn.correct {
+    border-color: var(--green);
+    background: #f0fdf5;
+    opacity: 1;
+    animation: correctPop .4s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes correctPop {
+    0%   { opacity:1; transform: scale(1); }
+    40%  { opacity:1; transform: scale(1.03); }
+    100% { opacity:1; transform: scale(1); }
+  }
+  .opt-btn.correct .opt-letter { background: var(--green); color: #fff; }
+  .opt-btn.wrong {
+    border-color: #e74c3c;
+    background: #fdf0f0;
+    opacity: .7;
+  }
+  .opt-btn.wrong .opt-letter { background: #e74c3c; color: #fff; }
+  .opt-btn:disabled { cursor: not-allowed; }
+
+  .feedback-row {
+    min-height: 32px;
+    font-size: 13px;
+    color: var(--slate);
+    margin-top: 8px;
+    text-align: center;
+    font-style: italic;
+  }
+
+  /* ── RESULTS SCREEN ── */
+  .score-ring-wrap {
+    display: flex; justify-content: center; margin-bottom: 24px;
+  }
+  .score-ring {
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+    box-shadow: 0 6px 28px rgba(36,112,192,.35);
+    color: #fff;
+  }
+  .score-ring .score-num { font-size: 44px; font-weight: 700; line-height: 1; }
+  .score-ring .score-denom { font-size: 13px; opacity: .75; }
+
+  .result-msg {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--charcoal);
+    margin-bottom: 8px;
+  }
+  .result-sub {
+    text-align: center;
+    font-size: 14px;
+    color: var(--slate);
+    margin-bottom: 24px;
+  }
+
+  .prize-banner {
+    background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 100%);
+    border-radius: 12px;
+    padding: 22px 28px;
+    color: #fff;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(46,204,113,.35);
+  }
+  .prize-banner h2 { font-size: 15px; font-weight: 600; opacity: .85; margin-bottom: 6px; }
+  .prize-banner .prize-title { font-size: clamp(18px, 3vw, 22px); font-weight: 700; margin-bottom: 14px; line-height: 1.3; }
+  .prize-banner .validity { font-size: 12px; opacity: .8; margin-bottom: 16px; }
+
+  .code-block {
+    background: rgba(0,0,0,.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .code-label { font-size: 11px; opacity: .7; text-transform: uppercase; letter-spacing: .07em; display: block; margin-bottom: 2px; }
+  .code-value { font-size: 22px; font-weight: 700; letter-spacing: .12em; font-family: monospace; }
+  .code-hint { font-size: 11px; opacity: .7; margin-top: 3px; }
+  .camera-icon { font-size: 28px; flex-shrink: 0; }
+
+  .no-prize-msg {
+    text-align: center;
+    padding: 20px;
+    background: var(--blue-light);
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  .no-prize-msg p { font-size: 14px; color: var(--charcoal); line-height: 1.5; }
+  .no-prize-msg .social { font-weight: 600; color: var(--blue); margin-top: 8px; }
+
+  .score-breakdown { margin-bottom: 24px; }
+  .breakdown-title { font-size: 12px; font-weight: 600; color: var(--slate); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+  .breakdown-dots { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dot {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #fff;
+    opacity: 0;
+    animation: dotIn .3s ease both;
+  }
+  .dot.correct { background: var(--green); }
+  .dot.wrong   { background: #e74c3c; }
+  @keyframes dotIn {
+    from { opacity:0; transform: scale(.5); }
+    to   { opacity:1; transform: scale(1); }
+  }
+
+  .btn-secondary {
+    display: block; width: 100%;
+    background: transparent;
+    border: 2px solid var(--blue);
+    color: var(--blue);
+    font-size: 15px; font-weight: 600;
+    padding: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+  }
+  .btn-secondary:hover { background: var(--blue-light); }
+
+  /* ── FOOTER ── */
+  .card-footer {
+    padding: 12px 36px;
+    border-top: 1px solid #eef1f3;
+    font-size: 11px;
+    color: #b0bec5;
+    text-align: center;
+    letter-spacing: .04em;
+  }
+
+  @media (max-width: 560px) {
+    .card-header { padding: 22px 22px 20px; }
+    .card-body { padding: 24px 22px; }
+    .card-footer { padding: 12px 22px; }
+    .intro-grid { grid-template-columns: 1fr; }
+    .options-grid { grid-template-columns: 1fr; }
+    .code-value { font-size: 18px; }
+  }
+
+  /* Wrapper so body layout works with absolute screens */
+  #app-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    min-height: 200px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ SPLASH ══════════ -->
+<div id="screen-splash" class="screen active">
+  <div class="splash-logo-wrap">
+    <img alt="CEDEMA" class="splash-real-logo js-logo" />
+    <button class="btn-splash" onclick="leaveSplash()">JUGAR</button>
+  </div>
+</div>
+
+<!-- app wrapper for positioned screens -->
+<div id="app-wrapper">
+
+<!-- ══════════ SCREEN 1: START ══════════ -->
+<div id="screen-start" class="screen">
+  <div class="card">
+    <div class="card-header card-header--start">
+      <img alt="CEDEMA" class="start-logo-img js-logo" />
+      <h1>Trivia de Relaciones<br>Internacionales</h1>
+      <p>Desafía tu conocimiento sobre política global, diplomacia y geopolítica contemporánea</p>
+    </div>
+    <div class="card-body">
+      <div class="intro-grid">
+        <div class="intro-item">
+          <div class="label">Preguntas</div>
+          <div class="value" id="intro-total-questions">— en total</div>
+        </div>
+        <div class="intro-item">
+          <div class="label">Ejes temáticos</div>
+          <div class="value">1 por eje</div>
+        </div>
+        <div class="intro-item">
+          <div class="label">Formato</div>
+          <div class="value">Opción múltiple</div>
+        </div>
+        <div class="intro-item">
+          <div class="label">Puntaje</div>
+          <div class="value">1 punto c/u</div>
+        </div>
+      </div>
+
+      <div class="prize-ladder">
+        <h3>🎓 Escala de becas</h3>
+        <div class="prize-row"><span class="prize-badge none">&lt; 60%</span> Sin premio — ¡seguí aprendiendo!</div>
+        <div class="prize-row"><span class="prize-badge">60–79%</span> Beca del 25% en formaciones CEDEMA</div>
+        <div class="prize-row"><span class="prize-badge">80–99%</span> Beca del 50% en formaciones CEDEMA</div>
+        <div class="prize-row"><span class="prize-badge gold">100%</span> 🏆 Beca COMPLETA (100%)</div>
+      </div>
+
+      <ul class="rules-list">
+        <li>Cada partida selecciona todas las preguntas configuradas, una por eje temático habilitado, en orden aleatorio.</li>
+        <li>No se solicitan datos personales. Tu privacidad está protegida.</li>
+        <li>Si ganás una beca, guardá el código ID que aparece en pantalla y canjealo en Instagram.</li>
+      </ul>
+
+      <button class="btn-primary" onclick="startGame()">Comenzar Trivia →</button>
+    </div>
+    <div class="card-footer">CEDEMA © 2025 — Todos los derechos reservados</div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN 2: GAME ══════════ -->
+<div id="screen-game" class="screen">
+  <div class="card">
+    <div class="card-header">
+      <div class="logo-row">
+        <div class="logo-mark-img"><img alt="CEDEMA" class="js-logo" /></div>
+        <div class="logo-text">
+          <strong>CEDEMA</strong>
+          <span>Centro de Debate Multidisciplinario Argentino</span>
+        </div>
+      </div>
+      <div class="q-meta">
+        <span id="q-counter">Pregunta 1 de —</span>
+        <span id="q-score-live">0 correctas</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <div><span class="axis-badge" id="axis-label">Eje temático</span></div>
+    </div>
+    <div class="card-body">
+      <p class="question-text" id="question-text">Cargando pregunta…</p>
+      <div class="options-grid" id="options-grid"></div>
+      <div class="feedback-row" id="feedback-row"></div>
+    </div>
+    <div class="card-footer">CEDEMA © 2025 — Todos los derechos reservados</div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN 3: RESULTS ══════════ -->
+<div id="screen-results" class="screen">
+  <div class="card">
+    <div class="card-header">
+      <div class="logo-row">
+        <div class="logo-mark-img"><img alt="CEDEMA" class="js-logo" /></div>
+        <div class="logo-text">
+          <strong>CEDEMA</strong>
+          <span>Centro de Debate Multidisciplinario Argentino</span>
+        </div>
+      </div>
+      <p style="font-size:13px;opacity:.7;margin-top:6px;">¡Gracias por participar en la Trivia de Relaciones Internacionales!</p>
+    </div>
+    <div class="card-body">
+      <div class="score-ring-wrap">
+        <div class="score-ring">
+          <span class="score-num" id="final-score">0</span>
+          <span class="score-denom" id="score-denom">de —</span>
+        </div>
+      </div>
+      <p class="result-msg" id="result-msg">Buen intento</p>
+      <p class="result-sub" id="result-sub">Seguí participando y aprendiendo.</p>
+
+      <div id="prize-section"></div>
+
+      <div class="score-breakdown">
+        <div class="breakdown-title">Tu recorrido</div>
+        <div class="breakdown-dots" id="breakdown-dots"></div>
+      </div>
+
+      <button class="btn-primary" onclick="startGame()" style="margin-bottom:12px;">Jugar de nuevo</button>
+      <button class="btn-secondary" onclick="goHome()">← Inicio</button>
+    </div>
+    <div class="card-footer">CEDEMA © 2025 — Todos los derechos reservados</div>
+  </div>
+</div>
+
+</div><!-- /app-wrapper -->
+
+<script src="questions.js"></script>
+<script src="config.js"></script>
+<script src="game-logic.js"></script>
+<script src="assets.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
