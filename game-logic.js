@@ -27,6 +27,44 @@ function generateID() {
   return `CDM-${seg(4)}-${seg(4)}`;
 }
 
+// ══════════════════════════════════════════════
+//  ARMADO DE LA PARTIDA
+// ══════════════════════════════════════════════
+function resolveGameAxes(questionBank, gameConfig) {
+  const disabledAxes = (gameConfig && gameConfig.disabledAxes) || [];
+  let axes = Object.keys(questionBank).filter(axis => !disabledAxes.includes(axis));
+  if (axes.length === 0) {
+    console.warn('gameConfig.disabledAxes deja 0 ejes disponibles; se usan todos los ejes.');
+    axes = Object.keys(questionBank);
+  }
+  return axes;
+}
+
+function buildGame(questionBank, gameConfig) {
+  const config = gameConfig || { disabledAxes: [], disabledQuestions: {} };
+  const disabledQuestions = config.disabledQuestions || {};
+  const axes = resolveGameAxes(questionBank, config);
+
+  const selected = [];
+  for (const axis of axes) {
+    const disabledIndices = disabledQuestions[axis] || [];
+    const pool = questionBank[axis]
+      .map((question, index) => ({ question, index }))
+      .filter(item => !disabledIndices.includes(item.index));
+
+    if (pool.length === 0) {
+      console.warn(`El eje "${axis}" no tiene preguntas habilitadas; se excluye de esta partida.`);
+      continue;
+    }
+
+    const chosen = pool[Math.floor(Math.random() * pool.length)].question;
+    const { options, correct } = shuffleOptions(chosen);
+    selected.push({ axis, q: chosen.q, options, correct });
+  }
+
+  return shuffle(selected);
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { LETTERS, shuffle, shuffleOptions, generateID };
+  module.exports = { LETTERS, shuffle, shuffleOptions, generateID, resolveGameAxes, buildGame };
 }
