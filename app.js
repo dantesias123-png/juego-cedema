@@ -177,14 +177,14 @@ function showResults() {
       }
 
       let prizeTitle, emoji;
-      if (prize.tier === 'complete') { prizeTitle = '🏆 BECA COMPLETA (100%) para cualquier formación académica de CEDEMA'; emoji = '🏆'; }
-      else if (prize.tier === 'half') { prizeTitle = 'BECA DEL 50% para cualquier formación académica de CEDEMA'; emoji = '🎓'; }
-      else { prizeTitle = 'BECA DEL 25% para cualquier formación académica de CEDEMA'; emoji = '🎓'; }
+      if (prize.tier === 'complete') { prizeTitle = '🏆 BECA COMPLETA (100%) para cualquier propuesta de formación de CEDEMA'; emoji = '🏆'; }
+      else if (prize.tier === 'half') { prizeTitle = 'BECA DEL 50% para cualquier propuesta de formación de CEDEMA'; emoji = '🎓'; }
+      else { prizeTitle = 'BECA DEL 25% para cualquier propuesta de formación de CEDEMA'; emoji = '🎓'; }
       ps.innerHTML = `
         <div class="prize-banner">
           <h2>${emoji} ¡Felicitaciones! Ganaste una beca</h2>
           <div class="prize-title">${prizeTitle}</div>
-          <div class="validity">⏱ Válido por 12 meses — Canjeable en Instagram de CEDEMA de forma privada</div>
+          <div class="validity">⏱ Válido por 12 meses — Canjealo enviando un mail a cedemaarg@gmail.com indicando el curso de interés y especificando tu código. </div>
           <div class="code-block">
             <div>
               <span class="code-label">Tu código único</span>
